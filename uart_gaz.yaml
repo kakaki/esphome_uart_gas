@@ -1,0 +1,77 @@
+esphome:
+  name: uart_gaz
+  platform: ESP8266
+  board: esp8285
+  includes:
+    - gaz.h
+  on_loop:
+    then:
+      - lambda: delay(5);    
+      
+wifi:
+  ssid: "ssid"
+  password: "secret"
+  power_save_mode: none
+  fast_connect: true
+  reboot_timeout: 45min
+  
+logger:
+  hardware_uart: UART1
+  
+api:
+
+ota:
+
+uart:
+  id: uart_bus
+  baud_rate: 9600
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  # stop_bits: 1
+
+binary_sensor:
+  - platform: gpio
+    name: "Gaz status BT"
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+
+switch:
+  - platform: uart
+    name: "UART Power"
+    data: "AT+POWE\r\n"
+  - platform: uart
+    name: "UART Power 2"
+    data: "AT+POWE2\r\n"
+  - platform: uart
+    name: "UART Power 3"
+    data: "AT+POWE3\r\n"
+
+sensor:
+  - platform: custom
+    lambda: |-
+      auto gaz = new Gaz(id(uart_bus));
+      App.register_component(gaz);
+      return {gaz->counter, gaz->voltage, gaz->level
+      };
+  
+    sensors:
+    - name: "Gaz ilość metrów"
+      unit_of_measurement: m3
+      accuracy_decimals: 2
+    
+    - name: "Gaz Zasilanie Voltage"
+      unit_of_measurement: "V"
+      accuracy_decimals: 2
+      
+    - name: "Gaz Zasilanie Level"
+      unit_of_measurement: il
+      accuracy_decimals: 0
+
+  - platform: wifi_signal
+    name: "Gaz WiFi Signal"
+    update_interval: 60s
+    
+  - platform: uptime
+    name: "Gaz Uptime"  
+    
